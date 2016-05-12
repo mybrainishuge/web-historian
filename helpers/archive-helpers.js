@@ -66,5 +66,9 @@ exports.isUrlArchived = function(url, callback) {
 
 };
 
-exports.downloadUrls = function() {
+exports.downloadUrls = function(array) {
+  array.forEach(site => 
+    fs.writeFile(exports.paths.archivedSites + '/' + site, 'blah blah blah')
+  );
+  
 };
