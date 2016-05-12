@@ -31,7 +31,6 @@ exports.handleRequest = function (req, res) {
       body += data;
     });
     req.on('end', () => {
-      console.log('here is the data', body.slice(4) );
       fs.appendFile( archive.paths.list, body.slice(4) + '\n', (err) => {
         console.log(err);
       });
