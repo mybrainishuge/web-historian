@@ -32,8 +32,11 @@ describe('server', function() {
         var fixturePath = archive.paths.archivedSites + '/' + fixtureName;
 
         // Create or clear the file.
+        //create file and open it
         var fd = fs.openSync(fixturePath, 'w');
+        //write google in it
         fs.writeSync(fd, 'google');
+        //close file
         fs.closeSync(fd);
 
         // Write data to the file.

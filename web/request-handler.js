@@ -25,15 +25,33 @@ exports.handleRequest = function (req, res) {
   var extName = path.extname(filePath);
   var contentType = fileExts[extName] || 'text/html';
   
-  if (extName === '.com') {
-    filePath = archive.paths.archivedSites + req.url;
-    loadStaticResources(filePath, res, contentType);
-  } else {
-    if (filePath === '') {
-      filePath = './web/public/index.html';
+  if (req.method === 'POST') {
+    var body = '';
+    req.on('data', data => {
+      body += data;
+    });
+    req.on('end', () => {
+      console.log('here is the data', body.slice(4) );
+      fs.appendFile( archive.paths.list, body.slice(4) + '\n', (err) => {
+        console.log(err);
+      });
+      res.writeHead(302, {'Content-Type': contentType});
+      res.end();
+    });
+  } 
+
+  if (req.method === 'GET') {
+    if (extName === '.com') {
+      filePath = archive.paths.archivedSites + req.url;
+      loadStaticResources(filePath, res, contentType);
     } else {
-      filePath = './web/public' + req.url;
+      if (filePath === '') {
+        filePath = './web/public/index.html';
+      } else {
+        filePath = './web/public' + req.url;
+      }
+      loadStaticResources(filePath, res, contentType);
     }
-    loadStaticResources(filePath, res, contentType);
-  }
+  } 
+
 };
