@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var http = require('http');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -55,11 +56,12 @@ exports.isUrlArchived = function(url, callback) {
 
   fs.stat(`${exports.paths.archivedSites}/${url}`, function(err, stat) {
     if (err == null) {
-      console.log('File exists');
-    } else if (err.code === 'ENOENT') {
+      // console.log('File exists');
       is = true;
+    } else if (err.code === 'ENOENT') {
     } else {
-      console.log('Some other error: ', err.code);
+      console.log('switched ' + is + ' to true');
+      console.log('Error: ', err.code);
     }
     callback(is);
   });
@@ -67,8 +69,21 @@ exports.isUrlArchived = function(url, callback) {
 };
 
 exports.downloadUrls = function(array) {
-  array.forEach(site => 
-    fs.writeFile(exports.paths.archivedSites + '/' + site, 'blah blah blah')
-  );
-  
+  array.forEach(site => {
+    var options = {
+      host: site
+    };
+    var callback = function(response) {
+      var str = '';
+      response.on ('data', function(chunk) {
+        str += chunk;
+      });
+      response.on('end', function() {
+        fs.writeFile(exports.paths.archivedSites + '/' + site, str);
+        // console.log('site:', str);
+      });
+    };
+    http.request(options, callback).end();
+  });
+
 };

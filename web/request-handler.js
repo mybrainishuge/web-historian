@@ -7,12 +7,12 @@ var fileExts = {
   '.css': 'text/css'
 };
 
-var loadStaticResources = function(filePath, res, contentType) {
+var loadStaticResources = function(filePath, res, contentType, code) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, {'Content-Type': contentType});
     } else {
-      res.writeHead(200, {'Content-Type': contentType});
+      res.writeHead(code, {'Content-Type': contentType});
       res.write(data);
     }
     res.end();
@@ -31,26 +31,49 @@ exports.handleRequest = function (req, res) {
       body += data;
     });
     req.on('end', () => {
-      fs.appendFile( archive.paths.list, body.slice(4) + '\n', (err) => {
-        console.log(err);
+      var url = body.slice(4);
+      // check if url is archived
+      archive.isUrlArchived(url, (isArchived) => {
+        console.log('Is ' + url + ' archived?', isArchived);
+        // if url is not archived
+        if (!isArchived) {
+          //TODO: show user loading.html
+          loadStaticResources(archive.paths.siteAssets + '/loading.html', res, contentType, 302);
+          // check if url is in todo list
+          archive.isUrlInList(url, (exists) => {
+            // if not in list
+            if (!exists) {
+              // add to todo list
+              archive.addUrlToList(url, () => {
+                console.log(url + ' has been added to list.');
+              });
+            }
+          });
+        } else {
+        //if it is archived, feed it to the user
+          loadStaticResources(archive.paths.archivedSites + '/' + url, res, contentType, 302);
+        }
       });
-      res.writeHead(302, {'Content-Type': contentType});
-      res.end();
+
+
+      // res.writeHead(302, {'Content-Type': contentType});
+      // res.end();
     });
   } 
 
   if (req.method === 'GET') {
     if (extName === '.com') {
       filePath = archive.paths.archivedSites + req.url;
-      loadStaticResources(filePath, res, contentType);
+      loadStaticResources(filePath, res, contentType, 200);
     } else {
       if (filePath === '') {
         filePath = './web/public/index.html';
       } else {
         filePath = './web/public' + req.url;
       }
-      loadStaticResources(filePath, res, contentType);
+      loadStaticResources(filePath, res, contentType, 200);
     }
+    // res.end();
   } 
 
 };
