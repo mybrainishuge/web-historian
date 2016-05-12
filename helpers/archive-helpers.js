@@ -70,20 +70,23 @@ exports.isUrlArchived = function(url, callback) {
 
 exports.downloadUrls = function(array) {
   array.forEach(site => {
-    var options = {
-      host: site
-    };
-    var callback = function(response) {
-      var str = '';
-      response.on ('data', function(chunk) {
-        str += chunk;
-      });
-      response.on('end', function() {
-        fs.writeFile(exports.paths.archivedSites + '/' + site, str);
-        // console.log('site:', str);
-      });
-    };
-    http.request(options, callback).end();
+    if (site !== '' && site.slice(0, 4) === 'www.') { 
+
+      var options = {
+        host: site
+      };
+      var callback = function(response) {
+        var str = '';
+        response.on ('data', function(chunk) {
+          str += chunk;
+        });
+        response.on('end', function() {
+          fs.writeFile(exports.paths.archivedSites + '/' + site, str);
+          // console.log('site:', str);
+        });
+      };
+      http.request(options, callback).end();
+    }
   });
 
 };
