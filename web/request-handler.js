@@ -1,6 +1,8 @@
+var Promise = require('bluebird');
 var path = require('path');
-var archive = require('../helpers/archive-helpers');
-var fs = require('fs');
+var archive = Promise.promisifyAll(require('../helpers/archive-helpers'));
+
+var fs = Promise.promisifyAll(require('fs'));
 // require more modules/folders here!
 var fileExts = {
   '.js': 'text/javascript',
@@ -32,28 +34,48 @@ exports.handleRequest = function (req, res) {
     });
     req.on('end', () => {
       var url = body.slice(4);
+      //PROMISIFIED VERSION
       // check if url is archived
-      archive.isUrlArchived(url, (isArchived) => {
-        console.log('Is ' + url + ' archived?', isArchived);
-        // if url is not archived
+      archive.isUrlArchivedAsync(url)
+      .then( isArchived => {
         if (!isArchived) {
-          //TODO: show user loading.html
           loadStaticResources(archive.paths.siteAssets + '/loading.html', res, contentType, 302);
-          // check if url is in todo list
-          archive.isUrlInList(url, (exists) => {
-            // if not in list
-            if (!exists) {
-              // add to todo list
-              archive.addUrlToList(url, () => {
-                console.log(url + ' has been added to list.');
-              });
-            }
-          });
+          return archive.isUrlInListAsync(url);
         } else {
-        //if it is archived, feed it to the user
           loadStaticResources(archive.paths.archivedSites + '/' + url, res, contentType, 302);
+          return archive.isUrlInListAsync(url);
         }
-      });
+      })
+      .then( exists => {
+        if (!exists) {
+          return archive.addUrlToListAsync(url);
+        }
+      })
+      .catch(error => console.log(error));
+
+
+      //CALLBACK WORKING VERSION
+      // archive.isUrlArchived(url, (isArchived) => {
+      //   console.log('Is ' + url + ' archived?', isArchived);
+      //   // if url is not archived
+      //   if (!isArchived) {
+      //     //TODO: show user loading.html
+      //     loadStaticResources(archive.paths.siteAssets + '/loading.html', res, contentType, 302);
+      //     // check if url is in todo list
+      //     archive.isUrlInList(url, (exists) => {
+      //       // if not in list
+      //       if (!exists) {
+      //         // add to todo list
+      //         archive.addUrlToList(url, () => {
+      //           console.log(url + ' has been added to list.');
+      //         });
+      //       }
+      //     });
+      //   } else {
+      //   //if it is archived, feed it to the user
+      //     loadStaticResources(archive.paths.archivedSites + '/' + url, res, contentType, 302);
+      //   }
+      // });
 
 
       // res.writeHead(302, {'Content-Type': contentType});
